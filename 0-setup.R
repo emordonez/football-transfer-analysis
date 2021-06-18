@@ -15,6 +15,7 @@ pacman::p_load(
 DATA_URL <- paste("https://drive.google.com/",
   "uc?export=download&id=1i_UREnRvRtPDKpADQRmE6_EMgHbzF0vP",
   sep="")
+
 LEAGUES <- c(
   "England",
   "Germany",
@@ -24,9 +25,13 @@ LEAGUES <- c(
 )
 # Exchange rate is fixed to 16 Apr 2021, when I last web scraped the above data
 EUR_TO_GBP <- 0.8635
-OUTPUT_1 <- "output-spending-inequality.tex"
-OUTPUT_2 <- "output-defender-attacker-values.tex"
-OUTPUT_3 <- "output-english-player-premium.tex"
+
+OUTPUT_1 <- "output-1-spending-inequality.tex"
+OUTPUT_2 <- "output-2-defender-attacker-values.tex"
+OUTPUT_3 <- "output-3-english-player-premium.tex"
+system(sprintf("echo '' > %s", OUTPUT_1))
+system(sprintf("echo '' > %s", OUTPUT_2))
+system(sprintf("echo '' > %s", OUTPUT_3))
 
 # UTILITY FUNCTIONS ===========================================================
 
@@ -37,32 +42,18 @@ get_league_df <- function(league) {
     rbindlist(use.names = TRUE)
 }
 
-gini <- function(df, col = club) {
-  df <- df %>%
-    group_by({{ col }}) %>%
-    summarize(spend = sum(fee)) %>%
-    arrange(spend)
-  x <- 0
-  n <- nrow(df)
-  total_spend <- sum(df$spend)
-  for (i in 1:n) {
-    x <- x + i * df$spend[i]
-  }
-
-  2 * x / (n * total_spend) - (n + 1) / n
-}
-
 save_plot <- function(filename, plot, width = 7, height = 7, svg = FALSE) {
+  system(paste("/bin/bash -c", shQuote("mkdir -p figures")))
   ggsave(
-    sprintf("%s.png", filename),
+    sprintf("figures/%s.png", filename),
     plot,
     width = width, height = height,
     units = "in", dpi = 96
   )
   if (svg) {
-    system(paste("/bin/bash -c", shQuote("mkdir -p svg")))
+    system(paste("/bin/bash -c", shQuote("mkdir -p figures/svg")))
     ggsave(
-      sprintf("svg/%s.svg", filename),
+      sprintf("figures/svg/%s.svg", filename),
       plot,
       width = width, height = height,
       units = "in", dpi = 96
@@ -84,9 +75,11 @@ if (!dir.exists("./data")) {
 }
 
 data <- rbindlist(list(
-  get_league_df("premier-league"),
-  get_league_df("1-bundesliga") %>% mutate(league = "Bundesliga"),
-  get_league_df("laliga") %>% mutate(league = "La Liga"),
-  get_league_df("serie-a"),
-  get_league_df("ligue-1")
+  get_league_df("premier-league") %>% mutate(league = "England"),
+  get_league_df("ligue-1") %>% mutate(league = "France"),
+  get_league_df("1-bundesliga") %>% mutate(league = "Germany"),
+  get_league_df("serie-a") %>% mutate(league = "Italy"),
+  get_league_df("laliga") %>% mutate(league = "Spain")
 ), use.names = TRUE)
+
+rm(get_league_df)

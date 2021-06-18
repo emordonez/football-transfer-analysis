@@ -1,23 +1,24 @@
-system(sprintf("echo '' > %s", OUTPUT_1))
-system(sprintf("echo '' > %s", OUTPUT_2))
-system(sprintf("echo '' > %s", OUTPUT_3))
-
 # INEQUALITIES IN LEAGUE TRANSFER SPENDING ====================================
+
+gini <- function(df, col = club) {
+  df <- df %>%
+    group_by({{ col }}) %>%
+    summarize(spend = sum(fee)) %>%
+    arrange(spend)
+  x <- 0
+  n <- nrow(df)
+  total_spend <- sum(df$spend)
+  for (i in 1:n) {
+    x <- x + i * df$spend[i]
+  }
+
+  2 * x / (n * total_spend) - (n + 1) / n
+}
 
 ineq_df <- data %>%
   # We look only at transfer purchases with a fee
   filter(movement == "in" & fee > 0) %>%
-  mutate(
-    fee = fee / 1e6,
-    season = as.integer(season),
-    league = case_when(
-      league == "Premier League" ~ "England",
-      league == "Ligue 1" ~ "France",
-      league == "Bundesliga" ~ "Germany",
-      league == "Serie A" ~ "Italy",
-      league == "La Liga" ~ "Spain"
-    )
-  ) %>%
+  mutate(fee = fee / 1e6, season = as.integer(season)) %>%
   select(c(club, fee, league, season))
 
 league_spending <- ineq_df %>%
@@ -31,7 +32,8 @@ league_spending <- ineq_df %>%
     by = "season"
   ) %>%
   # Data frames are spread wide for tables
-  spread(league, spend)
+  spread(league, spend) %>%
+  select(c(season, England, France, Germany, Italy, Spain, total))
 
 league_proportions <- ineq_df %>%
   group_by(season, league) %>%
@@ -40,12 +42,14 @@ league_proportions <- ineq_df %>%
   select(-spend) %>%
   spread(league, proportion)
 
+# TODO: Visualization
 gini_intraleague <- ineq_df %>%
   group_by(league, season) %>%
   do(data.frame(gini_coeff = gini(.))) %>%
   ungroup() %>%
   mutate(t = season - 1992)
 
+# TODO: Visualization
 gini_interleague <- ineq_df %>%
   group_by(season) %>%
   do(data.frame(gini_coeff = gini(., col = league))) %>%
@@ -85,7 +89,7 @@ for (league_name in LEAGUES) {
     xtable(
       summary(fit),
       caption = sprintf("Linear fit for Gini coefficients of %s.", league_name),
-      display = c("g", "g", "g", "g", "g"),
+      display = rep("g", 5),
       auto = TRUE
     ),
     include.rownames = FALSE
@@ -94,13 +98,16 @@ for (league_name in LEAGUES) {
 writeLines(
   "% LINEAR FIT FOR GINI COEFFICIENT OF SPENDING AMONG ALL LEAGUES ==============="
 )
+fit <- lm(gini_coeff ~ t, data = gini_interleague)
 print(
   xtable(
-    summary(lm(gini_coeff ~ t, data = gini_interleague)),
+    summary(fit),
     caption = "Linear fit for Gini coefficients of spending across leagues.",
-    display = c("g", "g", "g", "g", "g"),
+    display = rep("g", 5),
     auto = TRUE
   ),
   include.rownames = FALSE
 )
 sink()
+
+rm(fit, gini, ineq_df, league_proportions, league_spending)
