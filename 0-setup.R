@@ -29,11 +29,8 @@ EUR_TO_GBP <- 0.8635
 OUTPUT_1 <- "output-1-spending-inequality.tex"
 OUTPUT_2 <- "output-2-defender-attacker-values.tex"
 OUTPUT_3 <- "output-3-english-player-premium.tex"
-system(sprintf("echo '' > %s", OUTPUT_1))
-system(sprintf("echo '' > %s", OUTPUT_2))
-system(sprintf("echo '' > %s", OUTPUT_3))
 
-# UTILITY FUNCTIONS ===========================================================
+# DATA ========================================================================
 
 get_league_df <- function(league) {
   dir("./data", pattern = "[12][0129]\\d\\d") %>%
@@ -41,28 +38,6 @@ get_league_df <- function(league) {
     lapply(read_csv, col_types = cols()) %>%
     rbindlist(use.names = TRUE)
 }
-
-save_plot <- function(filename, plot, width = 7, height = 7, svg = FALSE) {
-  system(paste("/bin/bash -c", shQuote("mkdir -p figures")))
-  ggsave(
-    sprintf("figures/%s.png", filename),
-    plot,
-    width = width, height = height,
-    units = "in", dpi = 96
-  )
-  if (svg) {
-    system(paste("/bin/bash -c", shQuote("mkdir -p figures/svg")))
-    ggsave(
-      sprintf("figures/svg/%s.svg", filename),
-      plot,
-      width = width, height = height,
-      units = "in", dpi = 96
-    )
-  }
-  invisible(filename)
-}
-
-# DATA ========================================================================
 
 if (!dir.exists("./data")) {
   download.file(DATA_URL, destfile = "data.zip")
@@ -81,5 +56,10 @@ data <- rbindlist(list(
   get_league_df("serie-a") %>% mutate(league = "Italy"),
   get_league_df("laliga") %>% mutate(league = "Spain")
 ), use.names = TRUE)
+
+system(sprintf("echo '' > %s", OUTPUT_1))
+system(sprintf("echo '' > %s", OUTPUT_2))
+system(sprintf("echo '' > %s", OUTPUT_3))
+print("Output files will be overwritten each time you run an analysis.")
 
 rm(get_league_df)

@@ -1,4 +1,8 @@
 # INEQUALITIES IN LEAGUE TRANSFER SPENDING ====================================
+#
+# This analysis investigates whether total transfer spending within leagues and
+# between leagues is becoming more unequal over time. We use a Gini coefficient
+# calculation to measure these inequalities.
 
 gini <- function(df, col = club) {
   df <- df %>%
@@ -55,6 +59,8 @@ gini_interleague <- ineq_df %>%
   do(data.frame(gini_coeff = gini(., col = league))) %>%
   ungroup() %>%
   mutate(t = season - 1992)
+
+# WRITE RESULTS ===============================================================
 
 sink(OUTPUT_1)
 writeLines(
