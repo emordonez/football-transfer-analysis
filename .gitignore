@@ -1,0 +1,11 @@
+data
+figures
+output-*.tex
+
+# LaTeX build files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.pdf
+*.synctex.gz
