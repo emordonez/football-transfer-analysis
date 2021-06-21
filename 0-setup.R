@@ -7,6 +7,7 @@ pacman::p_load(
   "dplyr",
   "readr",
   "ggplot2",
+  "glue",
   "showtext",
   "tidyr",
   "xtable"
